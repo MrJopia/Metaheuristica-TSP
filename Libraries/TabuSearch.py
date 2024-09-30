@@ -118,6 +118,8 @@ def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numD
     BestSolution = first_solution(AmountNodes)
     CurrentSolution = BestSolution
     tabu_list = []
+    global obj_fun_calls
+    obj_fun_calls = 0
 
     # Until Max Iterations (Stop Criteria)
     for _ in range(MaxIterations):
@@ -152,7 +154,6 @@ def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numD
 
     # takes the count of objective function
     # calls and return it.
-    global obj_fun_calls
 
     return BestSolution, obj_fun_calls
 
