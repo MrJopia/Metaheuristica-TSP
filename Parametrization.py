@@ -241,14 +241,14 @@ Instances, Opt_Instances = Read_Content(files_Instances,files_OPT)
 
 # Parametrization Tabu search.
 study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_TS_capsule(Instances), n_trials=5)
+study.optimize(Parametrizartion_TS_capsule(Instances), n_trials=11)
 best_params = study.best_params
 print('Best parameters:', best_params)
 save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)
 
 # Parametrization Guided local search.
 study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_GLS_capsule(Instances), n_trials=5)
+study.optimize(Parametrizartion_GLS_capsule(Instances), n_trials=11)
 best_params = study.best_params
 print('Best parameters:', best_params)
 save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)
