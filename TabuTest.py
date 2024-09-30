@@ -22,8 +22,8 @@ Path_Instances = "Instances/Small"
 #Path_Instances = "Instances/Big"
 Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
-output_directory_1 = 'Results/Medium'
-output_directory_2 = 'Results/Big'
+#output_directory_1 = 'Results/Medium'
+#output_directory_2 = 'Results/Big'
 best_TS_params_file = 'best_TS_params.txt'
 
 ########## Own files ##########
