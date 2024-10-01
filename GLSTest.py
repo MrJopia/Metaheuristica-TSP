@@ -133,19 +133,19 @@ for j in range(n):
         value = ObjFun(result,Instances[j])
         list_results_f.append(value)
         list_results_c.append(calls)
-        list_opt.append(ObjFun(OptInstances[j], Instances[j]))
-        list_results_err.append(compare_opt_r(result,OptInstances[j], Instances[j]))
+        #list_opt.append(ObjFun(OptInstances[j], Instances[j]))
+        #list_results_err.append(compare_opt_r(result,OptInstances[j], Instances[j]))
 
 # Definir nombres de columnas para el CSV
-columnas = ['Results', 'ObjectiveFunction', 'Optimal', 'Error', 'Calls']
-#columnas = ['Results', 'ObjectiveFunction', 'Calls']
+#columnas = ['Results', 'ObjectiveFunction', 'Optimal', 'Error', 'Calls']
+columnas = ['Results', 'ObjectiveFunction', 'Calls']
 
 # Crear un DataFrame con los resultados
 df = pd.DataFrame({
     'Results': list_results,
     'ObjectiveFunction': list_results_f,
-    'Optimal': list_opt,
-    'Error': list_results_err,
+    #'Optimal': list_opt,
+    #'Error': list_results_err,
     'Calls': list_results_c
 })
 
