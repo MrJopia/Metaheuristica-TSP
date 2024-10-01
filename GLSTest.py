@@ -18,8 +18,8 @@ import pandas as pd
 """
 obj_func_calls = 0
 #Path_Instances = "Instances/Small"
-Path_Instances = "Instances/Medium"
-#Path_Instances = "Instances/Big"
+#Path_Instances = "Instances/Medium"
+Path_Instances = "Instances/Big"
 Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 output_directory_1 = 'Results/Medium'
@@ -86,7 +86,7 @@ def compare_opt_r(result, optimaltour, DistanceMatrix):
     optimaltour_f = ObjFun(optimaltour, DistanceMatrix)
 
     # Error.
-    err = (optimaltour_f-result_f)/optimaltour_f
+    err = (result_f-optimaltour_f)/optimaltour_f
 
     return err
 
@@ -116,8 +116,9 @@ random.seed(80)
 n = len(Instances)
 list_results = []
 list_results_f = []
+list_opt = []
 list_results_c = []
-#list_results_err = []
+list_results_err = []
 
 # Small instances test
 for j in range(n):
@@ -132,18 +133,21 @@ for j in range(n):
         value = ObjFun(result,Instances[j])
         list_results_f.append(value)
         list_results_c.append(calls)
-        #list_results_err.append(compare_opt_r(result,OptInstances[j], Instances[j]))
+        list_opt.append(ObjFun(OptInstances[j], Instances[j]))
+        list_results_err.append(compare_opt_r(result,OptInstances[j], Instances[j]))
 
 # Definir nombres de columnas para el CSV
-columnas = ['Results', 'ObjectiveFunction', 'Calls']
+columnas = ['Results', 'ObjectiveFunction', 'Optimal', 'Error', 'Calls']
+#columnas = ['Results', 'ObjectiveFunction', 'Calls']
 
 # Crear un DataFrame con los resultados
 df = pd.DataFrame({
     'Results': list_results,
     'ObjectiveFunction': list_results_f,
-    #'Error': list_results_err,
+    'Optimal': list_opt,
+    'Error': list_results_err,
     'Calls': list_results_c
 })
 
 # Guardar el DataFrame en un archivo CSV
-df.to_csv(output_directory_1 + '/tsp_Medium_GLS_results.csv', index=False)
+df.to_csv(output_directory_2 + '/tsp_Big_GLS_results.csv', index=False)
