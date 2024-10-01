@@ -21,11 +21,11 @@ Path_Instances = "Instances/Small"
 Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 
-#best_TS_params_file = 'best_TS_params_51.txt'
-#trials_TS_file = 'trials_TS_params_51.csv'
+best_TS_params_file = 'best_TS_params_11.txt'
+trials_TS_file = 'trials_TS_params_11.csv'
 
-best_GLS_params_file = 'best_GLS_params.txt'
-trials_GLS_file = 'trials_GLS_params.csv'
+#best_GLS_params_file = 'best_GLS_params.txt'
+#trials_GLS_file = 'trials_GLS_params.csv'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -250,15 +250,15 @@ for file in Content_OPT:
 Instances, Opt_Instances = Read_Content(files_Instances,files_OPT)
 
 # Parametrization Tabu search.
-"""study = optuna.create_study(direction='minimize')
+study = optuna.create_study(direction='minimize')
 study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=51)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)"""
+save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)
 
 # Parametrization Guided local search.
-study = optuna.create_study(direction='minimize')
+"""study = optuna.create_study(direction='minimize')
 study.optimize(Parametrizartion_GLS_capsule(Instances, Opt_Instances), n_trials=11)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)
+save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)"""

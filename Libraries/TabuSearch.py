@@ -25,12 +25,14 @@ def ObjFun(Solution, DistanceMatrix):
     """
     # Initialization of length of vector and
     # sum.
-    tamVector = len(Solution)
     sum = 0
 
-    # Sum connetions between nodes.
-    for i in range(-1,tamVector-1):
-        sum = sum + DistanceMatrix[Solution[i]-1][Solution[i+1]-1]
+    # Loop through the solution to sum the costs of edges.
+    for i in range(len(Solution) - 1):
+        sum += DistanceMatrix[Solution[i] - 1][Solution[i + 1] - 1]
+
+    # Add the cost from the last node back to the first to complete the tour.
+    sum += DistanceMatrix[Solution[-1] - 1][Solution[0] - 1]
     
     # Count calls on this function.
     global obj_fun_calls

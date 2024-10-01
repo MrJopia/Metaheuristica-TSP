@@ -24,7 +24,7 @@ Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 #output_directory_1 = 'Results/Medium'
 #output_directory_2 = 'Results/Big'
-best_TS_params_file = 'best_TS_params.txt'
+best_TS_params_file = 'best_TS_params_11.txt'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -86,11 +86,11 @@ def compare_opt_r(result, optimaltour, DistanceMatrix):
     optimaltour_f = ObjFun(optimaltour, DistanceMatrix)
 
     # Error.
-    err = (optimaltour_f-result_f)/optimaltour_f
+    err = (result_f-optimaltour_f)/optimaltour_f
 
     return err
 
-
+########## Procedure ##########
 # Obtain small TSP's instances.
 Content_Instances = os.listdir(Path_Instances)
 files_Instances = []
@@ -117,6 +117,7 @@ random.seed(80)
 n = len(Instances)
 list_results = []
 list_results_f = []
+list_opt = []
 list_results_c = []
 list_results_err = []
 
@@ -132,22 +133,24 @@ for j in range(n):
         
         list_results.append(result)
         value = ObjFun(result,Instances[j])
+        list_opt.append(ObjFun(OptInstances[j], Instances[j]))
         list_results_f.append(value)
         list_results_c.append(calls)
         list_results_err.append(compare_opt_r(result, OptInstances[j], Instances[j]))
 
 
 # Definir nombres de columnas para el CSV
-columnas = ['Results', 'ObjectiveFunction', 'Error', 'Calls']
+columnas = ['Results', 'ObjectiveFunction', 'Optimal', 'Error', 'Calls']
 
 # Crear un DataFrame con los resultados
 df = pd.DataFrame({
     'Results': list_results,
     'ObjectiveFunction': list_results_f,
+    'Optimal': list_opt,
     'Error': list_results_err,
     'Calls': list_results_c
 })
 
 # Guardar el DataFrame en un archivo CSV
-df.to_csv(output_directory + '/tsp_Small_results.csv', index=False)
+df.to_csv(output_directory + '/tsp_Small_results_11.csv', index=False)
     

@@ -1,6 +1,0 @@
-{
-    "MaxIterations": 210,
-    "MaxIterationsLS": 186,
-    "influence_factor": 0.5128792324055084,
-    "numDesireSolution": 75
-}

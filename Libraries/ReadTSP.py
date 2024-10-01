@@ -12,8 +12,8 @@ def EuclidianDistance(node_A , node_B):
         Description: Calculates euclidian distance
         between two coordenates.
     """
-    return np.sqrt((node_B[0] - node_A[1])**2 
-                       + (node_B[0]-node_A[1])**2)
+    return np.sqrt((node_B[0]-node_A[0])**2 
+                       + (node_B[1]-node_A[1])**2)
 
 def EuclideanDistanceMatrix(NodeList, Tam_Nodes):
     """
