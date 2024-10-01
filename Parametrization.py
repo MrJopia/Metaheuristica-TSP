@@ -21,11 +21,11 @@ Path_Instances = "Instances/Small"
 Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 
-best_TS_params_file = 'best_TS_params.txt'
-trials_TS_file = 'trials_TS_params.csv'
+#best_TS_params_file = 'best_TS_params_51.txt'
+#trials_TS_file = 'trials_TS_params_51.csv'
 
-#best_GLS_params_file = 'best_GLS_params.txt'
-#trials_GLS_file = 'trials_GLS_params.csv'
+best_GLS_params_file = 'best_GLS_params.txt'
+trials_GLS_file = 'trials_GLS_params.csv'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -60,7 +60,7 @@ def Read_Content(filenames_Ins, filenames_Opt):
 
     return Instances, OPT_Instances
 
-def Parametrization_TS(trial, Instances):
+def Parametrization_TS(trial, Instances, Opt_Instances):
     """
         Parametrization (Function)
             Input: trial (parameters for evaluation) and
@@ -76,8 +76,8 @@ def Parametrization_TS(trial, Instances):
     minErrorInten = trial.suggest_loguniform('ErrorTolerance', 1e-5, 1e-1)
     amountIntensification = trial.suggest_int('amountIntensification', 10, 100)
 
-    # Initializate count of obj function calls.
-    total_obj_value = 0
+    # Initializate total normalized error.
+    total_normalized_error = 0
     num_instances = len(Instances)
 
     for i in range(num_instances):
@@ -89,24 +89,28 @@ def Parametrization_TS(trial, Instances):
         global obj_func_calls
         obj_func_calls = calls
 
-        # Evaluate the quality of the solution
+        # Evaluate the solution quality and calculate normalized error
         objective_value = ObjFun(best_solution, Instances[i])
+        optimal_value = ObjFun(Opt_Instances[i], Instances[i])
 
-        # Sum the objective values
-        total_obj_value += objective_value
+        # Calculate normalized error
+        normalized_error = abs(objective_value - optimal_value) / optimal_value
+
+        # Sum the normalized error
+        total_normalized_error += normalized_error
 
     # Return the average objective value across all instances
-    return total_obj_value / num_instances
+    return total_normalized_error / num_instances
 
-def Parametrizartion_TS_capsule(Instances):
+def Parametrizartion_TS_capsule(Instances, Opt_Instances):
     """
         Parametrization_capsule (Function)
             Encapsulate other inputs from principal
             parametrization function.
     """
-    return lambda trial: Parametrization_TS(trial, Instances)
+    return lambda trial: Parametrization_TS(trial, Instances, Opt_Instances)
 
-def Parametrization_GLS(trial, Instances):
+def Parametrization_GLS(trial, Instances, Opt_Instances):
     """
         Parametrization (Function)
             Input: trial (parameters for evaluation) and
@@ -120,8 +124,8 @@ def Parametrization_GLS(trial, Instances):
     influence_factor = trial.suggest_float('influence_factor', 0.01, 1.0)
     numDesireSolution = trial.suggest_int('numDesireSolution', 10, 100)
 
-    # Initializate count of obj function calls.
-    total_obj_value = 0
+    # Initializate total normalized error.
+    total_normalized_error = 0
     num_instances = len(Instances)
 
     for i in range(num_instances):
@@ -133,22 +137,26 @@ def Parametrization_GLS(trial, Instances):
         global obj_func_calls
         obj_func_calls = calls
 
-        # Evaluate the quality of the solution
+        # Evaluate the solution quality and calculate normalized error
         objective_value = ObjFun(best_solution, Instances[i])
+        optimal_value = ObjFun(Opt_Instances[i], Instances[i])
 
-        # Sum the objective values
-        total_obj_value += objective_value
+        # Calculate normalized error
+        normalized_error = abs(objective_value - optimal_value) / optimal_value
+
+        # Sum the normalized error
+        total_normalized_error += normalized_error
 
     # Return the average objective value across all instances
-    return total_obj_value / num_instances
+    return total_normalized_error / num_instances
 
-def Parametrizartion_GLS_capsule(Instances):
+def Parametrizartion_GLS_capsule(Instances, Opt_Instances):
     """
         Parametrization_capsule (Function)
             Encapsulate other inputs from principal
             parametrization function.
     """
-    return lambda trial: Parametrization_GLS(trial, Instances)
+    return lambda trial: Parametrization_GLS(trial, Instances, Opt_Instances)
 
 def save_TS_study_txt(study, output_dir, best_params_file, trials_file):
     """
@@ -242,15 +250,15 @@ for file in Content_OPT:
 Instances, Opt_Instances = Read_Content(files_Instances,files_OPT)
 
 # Parametrization Tabu search.
-study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_TS_capsule(Instances), n_trials=11)
+"""study = optuna.create_study(direction='minimize')
+study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=51)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)
+save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)"""
 
 # Parametrization Guided local search.
-"""study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_GLS_capsule(Instances), n_trials=11)
+study = optuna.create_study(direction='minimize')
+study.optimize(Parametrizartion_GLS_capsule(Instances, Opt_Instances), n_trials=11)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)"""
+save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)

@@ -132,7 +132,7 @@ def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numD
         BestSolution_f = ObjFun(BestSolution, DistanceMatrix)
         CurrentSolution_f = ObjFun(BestNeighbor, DistanceMatrix)
         if abs(BestSolution_f - CurrentSolution_f) < minErrorInten:
-            Neighborhood = get_neighbors(BestSolution, amountIntensification)
+            Neighborhood = get_neighbors(CurrentSolution, amountIntensification)
             BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix,tabu_list)
 
         # Diversification criteria: There is no improvement.
