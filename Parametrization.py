@@ -21,8 +21,8 @@ Path_Instances = "Instances/Small"
 Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 
-best_TS_params_file = 'best_TS_params_11.txt'
-trials_TS_file = 'trials_TS_params_11.csv'
+best_TS_params_file = 'best_TS_params_51.txt'
+trials_TS_file = 'trials_TS_params_51.csv'
 
 #best_GLS_params_file = 'best_GLS_params.txt'
 #trials_GLS_file = 'trials_GLS_params.csv'

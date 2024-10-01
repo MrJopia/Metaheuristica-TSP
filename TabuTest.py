@@ -24,7 +24,7 @@ Path_OPT = "OptimalTours/Small"
 output_directory = 'Results/Small(Parametrization)'
 #output_directory_1 = 'Results/Medium'
 #output_directory_2 = 'Results/Big'
-best_TS_params_file = 'best_TS_params_11.txt'
+best_TS_params_file = 'best_TS_params_51.txt'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -152,5 +152,5 @@ df = pd.DataFrame({
 })
 
 # Guardar el DataFrame en un archivo CSV
-df.to_csv(output_directory + '/tsp_Small_results_11.csv', index=False)
+df.to_csv(output_directory + '/tsp_Small_results_51.csv', index=False)
     

@@ -1,7 +1,7 @@
 {
-    "MaxIterations": 53,
-    "TabuSize": 23,
-    "numDesireSolution": 11,
-    "ErrorTolerance": 9.064455355580576e-05,
-    "amountIntensification": 58
+    "MaxIterations": 400,
+    "TabuSize": 47,
+    "numDesireSolution": 91,
+    "ErrorTolerance": 0.0006136834657530287,
+    "amountIntensification": 87
 }
