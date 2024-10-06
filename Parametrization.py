@@ -12,20 +12,14 @@ import csv
         Path of TSP instances in your
     max_calls_obj_func (global variable)
         Minimum of calls for end parametrization.
-    obj_func_calls (global variable)
-        Counter of every time that
-        the objective function is called.
 """
-obj_func_calls = 0
-Path_Instances = "Instances/Small"
-Path_OPT = "OptimalTours/Small"
-output_directory = 'Results/Small(Parametrization)'
-
-#best_TS_params_file = 'best_TS_params_51.txt'
-#trials_TS_file = 'trials_TS_params_51.csv'
-
+Path_Instances = "Instances/Parametrizacion"
+Path_OPT = "Optimals/Parametrizacion/Optimals.txt"
+output_directory = 'Results/Parameters'
+best_TS_params_file = 'best_TS_params.txt'
 best_GLS_params_file = 'best_GLS_params.txt'
-trials_GLS_file = 'trials_GLS_params.csv'
+trials_TS_file = 'trials_TS.csv'
+trials_GLS_file = 'trials_GLS.csv'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -49,14 +43,12 @@ def Read_Content(filenames_Ins, filenames_Opt):
     """
     # Instances and OPT_tour.
     Instances = []
-    OPT_Instances = []
 
     # Reading files.
     for file in filenames_Ins:
         Instances.append(ReadTsp(file))
 
-    for file in filenames_Opt:
-        OPT_Instances.append(ReadTSP_optTour(file))
+    OPT_Instances = ReadTSP_optTour(filenames_Opt)
 
     return Instances, OPT_Instances
 
@@ -70,11 +62,9 @@ def Parametrization_TS(trial, Instances, Opt_Instances):
             every trial.
     """
     # Define intervals.
-    MaxIterations = trial.suggest_int('MaxIterations', 50, 500)
-    TabuSize = trial.suggest_int('TabuSize', 5, 50)
-    numDesireSolution = trial.suggest_int('numDesireSolution', 10, 100)
-    minErrorInten = trial.suggest_loguniform('ErrorTolerance', 1e-5, 1e-1)
-    amountIntensification = trial.suggest_int('amountIntensification', 10, 100)
+    MaxIterations = trial.suggest_int('MaxIterations', 100, 7501)
+    TabuSize = trial.suggest_int('TabuSize', 10, 750)
+    minErrorInten = trial.suggest_float('ErrorTolerance', 1e-5, 1e-1, log=True)
 
     # Initializate total normalized error.
     total_normalized_error = 0
@@ -82,19 +72,14 @@ def Parametrization_TS(trial, Instances, Opt_Instances):
 
     for i in range(num_instances):
         # Run Tabu Search with the parameters from Optuna
-        best_solution, calls = TabuSearch(Instances[i], len(Instances[i]), MaxIterations, 
-                                   TabuSize, numDesireSolution, minErrorInten, amountIntensification)
-        
-        # Call global variable and update calls count.
-        global obj_func_calls
-        obj_func_calls = calls
+        best_solution = TabuSearch(Instances[i], len(Instances[i]), MaxIterations, 
+                                   TabuSize, minErrorInten)
 
         # Evaluate the solution quality and calculate normalized error
         objective_value = ObjFun(best_solution, Instances[i])
-        optimal_value = ObjFun(Opt_Instances[i], Instances[i])
 
         # Calculate normalized error
-        normalized_error = abs(objective_value - optimal_value) / optimal_value
+        normalized_error = abs(objective_value - Opt_Instances[i]) / Opt_Instances[i]
 
         # Sum the normalized error
         total_normalized_error += normalized_error
@@ -119,10 +104,9 @@ def Parametrization_GLS(trial, Instances, Opt_Instances):
             Description: Do the parametrization prodecure with
             every trial.
     """
-    MaxIterations = trial.suggest_int('MaxIterations', 50, 500)
-    MaxIterationsLS = trial.suggest_int('MaxIterationsLS', 50, 200)
+    MaxIterations = trial.suggest_int('MaxIterations', 1, 50)
+    MaxIterationsLS = trial.suggest_int('MaxIterationsLS', 10, 150)
     influence_factor = trial.suggest_float('influence_factor', 0.01, 1.0)
-    numDesireSolution = trial.suggest_int('numDesireSolution', 10, 100)
 
     # Initializate total normalized error.
     total_normalized_error = 0
@@ -131,24 +115,19 @@ def Parametrization_GLS(trial, Instances, Opt_Instances):
     for i in range(num_instances):
         # Run Tabu Search with the parameters from Optuna
         best_solution, calls = GLS(Instances[i], len(Instances[i]), MaxIterations, 
-                                   MaxIterationsLS, numDesireSolution, influence_factor)
-        
-        # Call global variable and update calls count.
-        global obj_func_calls
-        obj_func_calls = calls
+                                   MaxIterationsLS, influence_factor)
 
         # Evaluate the solution quality and calculate normalized error
         objective_value = ObjFun(best_solution, Instances[i])
-        optimal_value = ObjFun(Opt_Instances[i], Instances[i])
 
         # Calculate normalized error
-        normalized_error = abs(objective_value - optimal_value) / optimal_value
+        normalized_error = abs(objective_value - Opt_Instances[i]) / Opt_Instances[i]
 
         # Sum the normalized error
         total_normalized_error += normalized_error
 
     # Return the average objective value across all instances
-    return total_normalized_error / num_instances
+    return (total_normalized_error / num_instances)
 
 def Parametrizartion_GLS_capsule(Instances, Opt_Instances):
     """
@@ -180,19 +159,19 @@ def save_TS_study_txt(study, output_dir, best_params_file, trials_file):
     with open(best_params_path, 'w') as f:
         json.dump(study.best_params, f, indent=4)
 
-    # Save the entire study's trials as CSV for detailed analysis
-    with open(trials_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Trial Number", "Value", "MaxIterations", "TabuSize", "numDesireSolution", "ErrorTolerance", "Average Objective Value"])
+    # Save the trials data in a CSV file
+    with open(trials_path, 'w', newline='') as csvfile:
+        fieldnames = ['trial_number', 'value', 'params']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
         for trial in study.trials:
-            avg_obj_value = trial.value / len(Instances)  # Assuming each trial evaluates all instances
-            writer.writerow([trial.number, trial.value, 
-                             trial.params.get('MaxIterations', None), 
-                             trial.params.get('TabuSize', None), 
-                             trial.params.get('numDesireSolution', None), 
-                             trial.params.get('ErrorTolerance', None),
-                             avg_obj_value])  # Add average objective value
-            
+            writer.writerow({
+                'trial_number': trial.number,
+                'value': trial.value,
+                'params': trial.params
+            })
+
 def save_GLS_study_txt(study, output_dir, best_params_file, trials_file):
     """
         save_GLS_study_txt (function)
@@ -215,50 +194,42 @@ def save_GLS_study_txt(study, output_dir, best_params_file, trials_file):
     with open(best_params_path, 'w') as f:
         json.dump(study.best_params, f, indent=4)
 
-    # Save the entire study's trials as CSV for detailed analysis
-    with open(trials_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Trial Number", "Value", "MaxIterations", "MaxIterationsLS", "Influence Factor", "numDesireSolution", "Average Objective Value"])
+    # Save the trials data in a CSV file
+    with open(trials_path, 'w', newline='') as csvfile:
+        fieldnames = ['trial_number', 'value', 'params']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
         for trial in study.trials:
-            avg_obj_value = trial.value / len(Instances)  # Assuming each trial evaluates all instances
-            writer.writerow([trial.number, trial.value, 
-                             trial.params.get('MaxIterations', None), 
-                             trial.params.get('MaxIterationsLS', None), 
-                             trial.params.get('influence_factor', None), 
-                             trial.params.get('numDesireSolution', None),
-                             avg_obj_value])  # Add average objective value
-            
+            writer.writerow({
+                'trial_number': trial.number,
+                'value': trial.value,
+                'params': trial.params
+            })
 
 ########## Procedure ##########
 
-# Obtain small TSP's instances.
+# Obtain TSP's instances.
 Content_Instances = os.listdir(Path_Instances)
 files_Instances = []
 for file in Content_Instances:
     if(os.path.isfile(os.path.join(Path_Instances,file))):
         files_Instances.append(Path_Instances+"/"+file)
 
-# Obtain optimal tours small TSP's instances.
-Content_OPT = os.listdir(Path_OPT)
-files_OPT = []
-for file in Content_OPT:
-    if(os.path.isfile(os.path.join(Path_OPT,file))):
-        files_OPT.append(Path_OPT+"/"+file)
-
 # Obtain TSP Instances and optimal tour
 # corresponding to each one.
-Instances, Opt_Instances = Read_Content(files_Instances,files_OPT)
+Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Parametrization Tabu search.
-"""study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=51)
+study = optuna.create_study(direction='minimize')
+study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=1, n_jobs=4)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)"""
+save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)
 
 # Parametrization Guided local search.
 study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_GLS_capsule(Instances, Opt_Instances), n_trials=11)
+study.optimize(Parametrizartion_GLS_capsule(Instances, Opt_Instances), n_trials=1, n_jobs=4)
 best_params = study.best_params
 print('Best parameters:', best_params)
 save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)

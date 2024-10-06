@@ -81,41 +81,37 @@ def ReadTsp(filename):
 
 def ReadTSP_optTour(filename):
     """
-    ReadTSP_optTour (function)
-        Input: File name.
-        Output: Optimal tour solution of tsp instance.
-        Description: Read a TSP optimal tour solution
-        found and make it a list.
+    Función para leer un archivo con formato 'id : valor'.
+    Devuelve una lista de flotantes.
+    
+    Parámetros:
+        filename (str): La ruta del archivo que contiene las soluciones óptimas.
+
+    Retorna:
+        list: Una lista de flotantes con los valores óptimos.
     """
-    # Input.
-    infile = open(filename,'r')
-    Dimension = 0
+    data = []  # Lista para almacenar los valores
 
-    # Read instance first line (last element should be
-    # filename).
-    Name = infile.readline().strip().split()[-1]
-    print(Name)
+    # Abrir el archivo en modo lectura
+    try:
+        with open(filename, 'r') as infile:
+            for line in infile:
+                # Ignorar líneas vacías o 'EOF'
+                line = line.strip()
+                if not line or line == "EOF":
+                    continue
+                
+                # Separar y obtener el último elemento, luego convertir a float
+                value = float(line.split(":")[-1].strip())
+                
+                # Almacenar el valor en la lista
+                data.append(value)
 
-    # Skip comments until DIMENSION.
-    for line in infile:
-        # Reading line.
-        broken_line = line.strip().split()
+    except FileNotFoundError:
+        print(f"El archivo '{filename}' no se encontró.")
+    except ValueError as e:
+        print(f"Error al convertir valor en línea: {e}")
+    except Exception as e:
+        print(f"Error al leer el archivo: {e}")
 
-        # Verification of DIMENSION.
-        if(broken_line[0] == 'DIMENSION' or broken_line[0] == 'DIMENSION:'):
-            Dimension = int(broken_line[-1])
-
-        # Verification of EOF or Node coordenates secction.
-        elif(broken_line[0] == 'EOF' or broken_line[0] == 'TOUR_SECTION'):
-            break
-
-    # Take route.
-    opts = []
-    for i in range(Dimension):
-        element = infile.readline()
-        opts.append(int(element))
-
-    # Close file.
-    infile.close()
-
-    return opts
+    return data

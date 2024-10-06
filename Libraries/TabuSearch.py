@@ -1,14 +1,6 @@
 ########## Libraries ##########
 import numpy as np
 
-########## Counter ##########
-"""
-    obj_fun_calls
-        Counter of every time that
-        the objective function is called.
-"""
-obj_fun_calls = 0
-
 ########## Functions TS ##########
 
 def ObjFun(Solution, DistanceMatrix):
@@ -17,29 +9,24 @@ def ObjFun(Solution, DistanceMatrix):
         Input: Permutation vector and
         distance matrix.
         Output: Value in objective function.
-        Description: Calculates the objetctive
+        Description: Calculates the objective
         function using permutation vector and
         distance matrix.
         The TSP objective function is the sum
         of all edge's cost.
     """
-    # Initialization of length of vector and
-    # sum.
-    sum = 0
+    # Initialization of length of vector and sum.
+    total_cost = 0
 
     # Loop through the solution to sum the costs of edges.
     for i in range(len(Solution) - 1):
-        sum += DistanceMatrix[Solution[i] - 1][Solution[i + 1] - 1]
+        total_cost += DistanceMatrix[Solution[i] - 1][Solution[i + 1] - 1]
 
     # Add the cost from the last node back to the first to complete the tour.
-    sum += DistanceMatrix[Solution[-1] - 1][Solution[0] - 1]
-    
-    # Count calls on this function.
-    global obj_fun_calls
-    obj_fun_calls += 1
+    total_cost += DistanceMatrix[Solution[-1] - 1][Solution[0] - 1]
 
-    return sum
-    
+    return total_cost
+
 def first_solution(AmountNodes):
     """
     first_solution (function)
@@ -48,31 +35,33 @@ def first_solution(AmountNodes):
         Description: Generates first solution.
     """
     # Random permutation node.
-    Vector = np.random.permutation(np.arange(1, AmountNodes+1))
+    Vector = np.random.permutation(np.arange(1, AmountNodes + 1))
     return Vector
 
-def get_neighbors(Solution, DesireNum):
+def two_opt_swap(Solution, i, j):
     """
-    get_neighbors (function)
-        Input: Reference Solution and Desire number
-        of neighbor.
-        Output: List of neighbor solutions (neighborhood).
-        Description: Generates a neighborhood 
-        of solutions.
+    two_opt_swap (function)
+        Input: Solution, and two indices i and j.
+        Output: New solution with 2-opt swap applied.
+        Description: Reverses the tour between indices i and j.
     """
-    # Generates solutions.
+    new_solution = np.copy(Solution)
+    new_solution[i:j+1] = np.flip(Solution[i:j+1])  # Reverse the segment
+    return new_solution
+
+def get_neighbors_2opt(Solution):
+    """
+    get_neighbors_2opt (function)
+        Input: Reference solution.
+        Output: List of neighbor solutions (2-opt neighborhood).
+        Description: Generates a neighborhood using 2-opt swaps.
+    """
     neighbors = []
-    for _ in range(DesireNum):
-        # Copy input's solution.
-        neighbor = np.copy(Solution)
-
-        # Swaping.
-        i, j = np.random.choice(len(Solution), 2, replace=False)
-        neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
-
-        # Add neighbor.
-        neighbors.append(neighbor.tolist())
-
+    # Apply 2-opt by selecting all possible pairs of edges to swap.
+    for i in range(len(Solution) - 1):
+        for j in range(i + 1, len(Solution)):
+            neighbor = two_opt_swap(Solution, i, j)
+            neighbors.append(neighbor.tolist())
     return neighbors
 
 def best_neighbor(Neighborhood, DistanceMatrix, TabuList):
@@ -80,7 +69,7 @@ def best_neighbor(Neighborhood, DistanceMatrix, TabuList):
     get_neighbors (function)
         Input: Neighborhood, Distance Matrix and
         Tabu List.
-        Output: neighbor  with best improvement 
+        Output: Neighbor with best improvement 
         in objective function.
         Description: Evaluates Neighborhood
         of permutation solutions.
@@ -101,32 +90,28 @@ def best_neighbor(Neighborhood, DistanceMatrix, TabuList):
     
     return Best
 
-def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numDesireSolution=50,
-               minErrorInten = 0.001, amountIntensification = 90):
+def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10,
+               minErrorInten=0.001):
     """
-    get_neighbors (function)
+    TabuSearch (function)
         Input: Distance Matrix (TSP instance), Total number of
         nodes, Max iterations for algorithm, size of
-        tabu list, number of solutions to generate, minimal
-        error for intensification and amount of solutions for
-        intensification.
-        Output: Unique solutions (Best found) and objective
-        finction calls.
-        Description: Implementation of Tabu Search
-        metaheuristic.
-        Reference: https://www.geeksforgeeks.org/what-is-tabu-search/
+        tabu list, minimal error for intensification and amount
+        of solutions for intensification.
+        Output: Unique solutions (Best found).
+        Description: Implementation of Tabu Search with 2-opt
+        for TSP.
     """ 
-    # Setting initial variables.   
+    # Setting initial variables.
     BestSolution = first_solution(AmountNodes)
     CurrentSolution = BestSolution
     tabu_list = []
-    global obj_fun_calls
-    obj_fun_calls = 0
 
     # Until Max Iterations (Stop Criteria)
     for _ in range(MaxIterations):
-        # Creating Neighborhood
-        Neighborhood = get_neighbors(CurrentSolution, numDesireSolution)
+        # Creating Neighborhood with 2-opt swaps.
+        Neighborhood = get_neighbors_2opt(CurrentSolution)
+
         # Search the best neighbor.
         BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
 
@@ -134,30 +119,27 @@ def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numD
         BestSolution_f = ObjFun(BestSolution, DistanceMatrix)
         CurrentSolution_f = ObjFun(BestNeighbor, DistanceMatrix)
         if abs(BestSolution_f - CurrentSolution_f) < minErrorInten:
-            Neighborhood = get_neighbors(CurrentSolution, amountIntensification)
-            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix,tabu_list)
+            Neighborhood = get_neighbors_2opt(CurrentSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
 
-        # Diversification criteria: There is no improvement.
-        if (BestNeighbor is None):
+        # Diversification criteria: No improvement.
+        if BestNeighbor is None:
             CurrentSolution = first_solution(AmountNodes)
-            Neighborhood = get_neighbors(CurrentSolution, numDesireSolution)
-            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix,tabu_list)
+            Neighborhood = get_neighbors_2opt(CurrentSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
 
-        # Adding on tabu list and change current solution.
+        # Adding to tabu list and change current solution.
         CurrentSolution = BestNeighbor
         tabu_list.append(CurrentSolution)
-        if (len(tabu_list) > TabuSize):
+        if len(tabu_list) > TabuSize:
             tabu_list.pop(0)
 
         # Change best solution.
-        if (ObjFun(BestNeighbor,DistanceMatrix) <
-            ObjFun(BestSolution,DistanceMatrix)):
+        if ObjFun(BestNeighbor, DistanceMatrix) < ObjFun(BestSolution, DistanceMatrix):
             BestSolution = BestNeighbor
 
-    # takes the count of objective function
-    # calls and return it.
-
-    return BestSolution, obj_fun_calls
+    # Return the best solution found.
+    return BestSolution
 
 
 ########## Functions GLS ##########
@@ -171,29 +153,24 @@ def penalty_function(Solution, DistanceMatrix, influence_factor, penalties):
         Description: Applies penalties to the solution based on visited edges.
     """
     tamVector = len(Solution)
-    sum_obj = 0
-    penaties_sum = 0
-
-    # Calculates objective function.
     sum_obj = ObjFun(Solution, DistanceMatrix)
+    penalties_sum = 0
 
     # Calculate penalized objective function
     for i in range(-1, tamVector - 1):
-        penaties_sum += influence_factor * penalties[Solution[i] - 1][Solution[i + 1] - 1]
+        penalties_sum += influence_factor * penalties[Solution[i] - 1][Solution[i + 1] - 1]
 
-    # Final value.
-    penalized_sum = sum_obj + penaties_sum
+    # Final value
+    penalized_sum = sum_obj + penalties_sum
     
     return penalized_sum
 
 def best_neighbor_GLS(Neighborhood, DistanceMatrix, influence_factor, penalties):
     """
-    get_neighbors (function)
+    best_neighbor_GLS (function)
         Input: Neighborhood and Distance Matrix.
-        Output: neighbor  with best improvement 
-        in objective function.
-        Description: Evaluates Neighborhood
-        of permutation solutions.
+        Output: Neighbor with best improvement in objective function.
+        Description: Evaluates Neighborhood of permutation solutions.
     """
     # Best solution and value in obj. function.
     Best = None
@@ -201,7 +178,6 @@ def best_neighbor_GLS(Neighborhood, DistanceMatrix, influence_factor, penalties)
 
     # Searching.
     for candidate in Neighborhood:
-        # Take candidate.
         Candidate_f = penalty_function(candidate, DistanceMatrix, influence_factor, penalties)
 
         # Conditions for change.
@@ -211,14 +187,14 @@ def best_neighbor_GLS(Neighborhood, DistanceMatrix, influence_factor, penalties)
     
     return Best
 
-def LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterations=100, numDesireSolution=50, 
-                       influence_factor = 0.1, penalties = None):
+def LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterations=100, 
+                       influence_factor=0.1, penalties=None):
     """
     LS_bestimprovement (function)
         Input: Distance Matrix (TSP instance), Total number of nodes, Max iterations,
-        number of desire neighbors.
-        Output: Best solution found and objective function calls.
-        Description: Implementation of Local Search with Best Improvement for TSP.
+        number of desired neighbors, influence factor and penalties matrix.
+        Output: Best solution found.
+        Description: Local Search using Best Improvement and 2-opt swaps.
     """
     # Generate an initial solution
     CurrentSolution = first_solution(AmountNodes)
@@ -226,8 +202,8 @@ def LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterations=100, numDesire
     BestSolution_f = penalty_function(BestSolution, DistanceMatrix, influence_factor, penalties)
 
     for _ in range(MaxIterations):
-        # Generate neighbors
-        Neighborhood = get_neighbors(CurrentSolution, numDesireSolution)
+        # Generate neighbors using 2-opt swaps
+        Neighborhood = get_neighbors_2opt(CurrentSolution)
 
         # Gets best neighbor
         BestNeighbor = best_neighbor_GLS(Neighborhood, DistanceMatrix, influence_factor, penalties)
@@ -237,54 +213,49 @@ def LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterations=100, numDesire
         CurrentSolution = BestNeighbor
 
         # Update the best solution found so far
-        if (BestNeighbor_f < BestSolution_f):
+        if BestNeighbor_f < BestSolution_f:
             BestSolution = CurrentSolution
+            BestSolution_f = BestNeighbor_f
 
     return BestSolution
 
 def update_penalties(Solution, penalties, DistanceMatrix):
     """
     update_penalties (function)
-        Input: Solution, penalties, distance matrix, and 
-        influence factor of penalizations.
+        Input: Solution, penalties, distance matrix.
         Output: Updated penalties.
         Description: Increases penalties for the most frequently used edges.
     """
-    # Initialize elements.
     tamVector = len(Solution)
     utilities = []
 
     for i in range(-1, tamVector - 1):
-        # Obtain utility.
         i_node = Solution[i] - 1
         j_node = Solution[i + 1] - 1
         cost = DistanceMatrix[i_node][j_node]
         penalty = penalties[i_node][j_node]
         utility = cost / (1 + penalty)
-
-        # Update list.
         utilities.append(utility)
 
-    # Obtain máx utility.
     max_utility = np.max(utilities)
 
     for i in range(-1, tamVector - 1):
         i_node = Solution[i] - 1
         j_node = Solution[i + 1] - 1
 
-        if (utilities[i] == max_utility):
+        if utilities[i] == max_utility:
             penalties[i_node][j_node] += 1
             penalties[j_node][i_node] += 1  # TSP is symmetric
 
     return penalties
 
-def GLS(DistanceMatrix, AmountNodes, MaxIterations=100, MaxIterationsLS=110, numDesireSolution=50, influence_factor = 0.1):
+def GLS(DistanceMatrix, AmountNodes, MaxIterations=100, MaxIterationsLS=10, influence_factor=0.1):
     """
     GLS (function)
         Input: Distance Matrix (TSP instance), Total number of nodes, Max iterations,
-            Max iterations for LS, number of desired neighbor solutions, lambda parameter.
-        Output: Best solution found and objective function calls.
-        Description: Implementation of Guided Local Search for TSP.
+        Max iterations for LS, number of desired neighbors, influence factor.
+        Output: Best solution found.
+        Description: Implementation of Guided Local Search for TSP with 2-opt.
     """
     # Generate an initial solution
     CurrentSolution = first_solution(AmountNodes)
@@ -295,9 +266,9 @@ def GLS(DistanceMatrix, AmountNodes, MaxIterations=100, MaxIterationsLS=110, num
     penalties = np.zeros((AmountNodes, AmountNodes))
 
     for _ in range(MaxIterations):
-        # Generate neighbors
-        BestNeighbor = LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterationsLS, numDesireSolution, 
-                       influence_factor, penalties)
+        # Use LS_bestimprovement with 2-opt
+        BestNeighbor = LS_bestimprovement(DistanceMatrix, AmountNodes, MaxIterationsLS, 
+                                          influence_factor, penalties)
         BestNeighbor_f = ObjFun(BestNeighbor, DistanceMatrix)
 
         # Update the current solution if an improvement is found
@@ -309,5 +280,4 @@ def GLS(DistanceMatrix, AmountNodes, MaxIterations=100, MaxIterationsLS=110, num
         # Update penalties using the guided local search mechanism
         penalties = update_penalties(CurrentSolution, penalties, DistanceMatrix)
 
-    global obj_fun_calls
-    return BestSolution, obj_fun_calls
+    return BestSolution
