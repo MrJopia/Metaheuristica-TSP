@@ -17,9 +17,9 @@ Path_Instances = "Instances/Parametrizacion"
 Path_OPT = "Optimals/Parametrizacion/Optimals.txt"
 output_directory = 'Results/Parameters'
 best_TS_params_file = 'best_TS_params.txt'
-best_GLS_params_file = 'best_GLS_params.txt'
+best_TSS_params_file = 'best_TSS_params.txt'
 trials_TS_file = 'trials_TS.csv'
-trials_GLS_file = 'trials_GLS.csv'
+trials_TSS_file = 'trials_TSS.csv'
 
 ########## Own files ##########
 # Path from the workspace.
@@ -28,7 +28,7 @@ from ReadTSP import ReadTsp # type: ignore
 from ReadTSP import ReadTSP_optTour # type: ignore
 from TabuSearch import ObjFun  # type: ignore
 from TabuSearch import TabuSearch  # type: ignore
-from TabuSearch import GLS  # type: ignore
+from TabuSearch import TabuSearch_Sample  # type: ignore
 
 ########## Secundary functions ##########
 
@@ -62,7 +62,7 @@ def Parametrization_TS(trial, Instances, Opt_Instances):
             every trial.
     """
     # Define intervals.
-    MaxIterations = trial.suggest_int('MaxIterations', 100, 7501)
+    MaxIterations = trial.suggest_int('MaxIterations', 101, 501)
     TabuSize = trial.suggest_int('TabuSize', 10, 750)
     minErrorInten = trial.suggest_float('ErrorTolerance', 1e-5, 1e-1, log=True)
 
@@ -95,7 +95,7 @@ def Parametrizartion_TS_capsule(Instances, Opt_Instances):
     """
     return lambda trial: Parametrization_TS(trial, Instances, Opt_Instances)
 
-def Parametrization_GLS(trial, Instances, Opt_Instances):
+def Parametrization_TSS(trial, Instances, Opt_Instances):
     """
         Parametrization (Function)
             Input: trial (parameters for evaluation) and
@@ -104,9 +104,9 @@ def Parametrization_GLS(trial, Instances, Opt_Instances):
             Description: Do the parametrization prodecure with
             every trial.
     """
-    MaxIterations = trial.suggest_int('MaxIterations', 1, 50)
-    MaxIterationsLS = trial.suggest_int('MaxIterationsLS', 10, 150)
-    influence_factor = trial.suggest_float('influence_factor', 0.01, 1.0)
+    MaxIterations = trial.suggest_int('MaxIterations', 101, 501)
+    TabuSize = trial.suggest_int('TabuSize', 10, 750)
+    minErrorInten = trial.suggest_float('ErrorTolerance', 1e-5, 1e-1, log=True)
 
     # Initializate total normalized error.
     total_normalized_error = 0
@@ -114,8 +114,8 @@ def Parametrization_GLS(trial, Instances, Opt_Instances):
 
     for i in range(num_instances):
         # Run Tabu Search with the parameters from Optuna
-        best_solution, calls = GLS(Instances[i], len(Instances[i]), MaxIterations, 
-                                   MaxIterationsLS, influence_factor)
+        best_solution = TabuSearch_Sample(Instances[i], len(Instances[i]), MaxIterations, 
+                                    TabuSize, (len(Instances[i])*(len(Instances[i]) - 1))//2, minErrorInten)
 
         # Evaluate the solution quality and calculate normalized error
         objective_value = ObjFun(best_solution, Instances[i])
@@ -129,13 +129,13 @@ def Parametrization_GLS(trial, Instances, Opt_Instances):
     # Return the average objective value across all instances
     return (total_normalized_error / num_instances)
 
-def Parametrizartion_GLS_capsule(Instances, Opt_Instances):
+def Parametrizartion_TSS_capsule(Instances, Opt_Instances):
     """
         Parametrization_capsule (Function)
             Encapsulate other inputs from principal
             parametrization function.
     """
-    return lambda trial: Parametrization_GLS(trial, Instances, Opt_Instances)
+    return lambda trial: Parametrization_TSS(trial, Instances, Opt_Instances)
 
 def save_TS_study_txt(study, output_dir, best_params_file, trials_file):
     """
@@ -172,9 +172,9 @@ def save_TS_study_txt(study, output_dir, best_params_file, trials_file):
                 'params': trial.params
             })
 
-def save_GLS_study_txt(study, output_dir, best_params_file, trials_file):
+def save_TSS_study_txt(study, output_dir, best_params_file, trials_file):
     """
-        save_GLS_study_txt (function)
+        save_HillClimbing_study_txt (function)
             Input: 
                 - study: Optuna study object for Guided Local Search.
                 - output_dir: Directory where the files will be saved.
@@ -221,15 +221,15 @@ for file in Content_Instances:
 Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Parametrization Tabu search.
-study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=1, n_jobs=4)
+"""study = optuna.create_study(direction='minimize')
+study.optimize(Parametrizartion_TS_capsule(Instances, Opt_Instances), n_trials=31, n_jobs=6)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)
+save_TS_study_txt(study, output_directory ,best_TS_params_file, trials_TS_file)"""
 
 # Parametrization Guided local search.
 study = optuna.create_study(direction='minimize')
-study.optimize(Parametrizartion_GLS_capsule(Instances, Opt_Instances), n_trials=1, n_jobs=4)
+study.optimize(Parametrizartion_TSS_capsule(Instances, Opt_Instances), n_trials=31, n_jobs=6)
 best_params = study.best_params
 print('Best parameters:', best_params)
-save_GLS_study_txt(study, output_directory, best_GLS_params_file, trials_GLS_file)
+save_TSS_study_txt(study, output_directory, best_TSS_params_file, trials_TSS_file)
