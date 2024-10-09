@@ -142,7 +142,7 @@ def TabuSearch(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10,
     return BestSolution
 
 
-########## Functions Hill Climbing ##########
+########## Tabu Search Sample ##########
 
 def get_neighbors(Solution, DesireNum):
     """
@@ -217,3 +217,119 @@ def TabuSearch_Sample(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=1
             BestSolution = BestNeighbor
 
     return BestSolution
+
+########## Versiones convergencia ##########
+def TabuSearch_Con(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10,
+               minErrorInten=0.001):
+    """
+    TabuSearch (function)
+        Input: Distance Matrix (TSP instance), Total number of
+        nodes, Max iterations for algorithm, size of
+        tabu list, minimal error for intensification and amount
+        of solutions for intensification.
+        Output: Unique solutions (Best found).
+        Description: Implementation of Tabu Search with 2-opt
+        for TSP.
+    """ 
+    # Setting initial variables.
+    BestSolution = first_solution(AmountNodes)
+    CurrentSolution = BestSolution
+    tabu_list = []
+    bests_n = []
+    best_sol = []
+
+    # Until Max Iterations (Stop Criteria)
+    for _ in range(MaxIterations):
+        # Creating Neighborhood with 2-opt swaps.
+        Neighborhood = get_neighbors_2opt(CurrentSolution)
+
+        # Search the best neighbor.
+        BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
+
+        # Intensification criteria: Minimal improvement.
+        BestSolution_f = ObjFun(BestSolution, DistanceMatrix)
+        CurrentSolution_f = ObjFun(BestNeighbor, DistanceMatrix)
+        if abs(BestSolution_f - CurrentSolution_f) < minErrorInten:
+            Neighborhood = get_neighbors_2opt(CurrentSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
+
+        # Diversification criteria: No improvement.
+        if BestNeighbor is None:
+            CurrentSolution = first_solution(AmountNodes)
+            Neighborhood = get_neighbors_2opt(CurrentSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
+
+        # Adding to tabu list and change current solution.
+        CurrentSolution = BestNeighbor
+        tabu_list.append(CurrentSolution)
+        if len(tabu_list) > TabuSize:
+            tabu_list.pop(0)
+
+        # Change best solution.
+        if ObjFun(BestNeighbor, DistanceMatrix) < ObjFun(BestSolution, DistanceMatrix):
+            BestSolution = BestNeighbor
+        
+        best_sol.append(ObjFun(BestSolution, DistanceMatrix))
+        bests_n.append(ObjFun(BestNeighbor, DistanceMatrix))
+
+    # Return the best solution found.
+    return bests_n, best_sol
+
+
+def TabuSearch_Sample_Con(DistanceMatrix, AmountNodes, MaxIterations=100, TabuSize=10, numDesireSolution=50,
+               minErrorInten = 0.001):
+    """
+    get_neighbors (function)
+        Input: Distance Matrix (TSP instance), Total number of
+        nodes, Max iterations for algorithm, size of
+        tabu list, number of solutions to generate, minimal
+        error for intensification and amount of solutions for
+        intensification.
+        Output: Unique solutions (Best found) and objective
+        finction calls.
+        Description: Implementation of Tabu Search
+        metaheuristic.
+    """ 
+    # Setting initial variables.   
+    BestSolution = first_solution(AmountNodes)
+    CurrentSolution = BestSolution
+    tabu_list = []
+    bests_n = []
+    best_sol = []
+
+    # Until Max Iterations (Stop Criteria)
+    for _ in range(MaxIterations):
+        # Creating Neighborhood
+        Neighborhood = get_neighbors(CurrentSolution, numDesireSolution)
+
+        # Search the best neighbor.
+        BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix, tabu_list)
+
+        # Intensification criteria: Minimal improvement.
+        BestSolution_f = ObjFun(BestSolution, DistanceMatrix)
+        CurrentSolution_f = ObjFun(BestNeighbor, DistanceMatrix)
+        if abs(BestSolution_f - CurrentSolution_f) < minErrorInten:
+            Neighborhood = get_neighbors(BestSolution, numDesireSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix,tabu_list)
+
+        # Diversification criteria: There is no improvement.
+        if (BestNeighbor is None):
+            CurrentSolution = first_solution(AmountNodes)
+            Neighborhood = get_neighbors(CurrentSolution, numDesireSolution)
+            BestNeighbor = best_neighbor(Neighborhood, DistanceMatrix,tabu_list)
+
+        # Adding on tabu list and change current solution.
+        CurrentSolution = BestNeighbor
+        tabu_list.append(CurrentSolution)
+        if (len(tabu_list) > TabuSize):
+            tabu_list.pop(0)
+
+        # Change best solution.
+        if (ObjFun(BestNeighbor,DistanceMatrix) <
+            ObjFun(BestSolution,DistanceMatrix)):
+            BestSolution = BestNeighbor
+    
+        best_sol.append(ObjFun(BestSolution, DistanceMatrix))
+        bests_n.append(ObjFun(BestNeighbor, DistanceMatrix))
+
+    return bests_n, best_sol

@@ -3,6 +3,7 @@ import sys
 import os
 #import numpy as np
 import json
+import csv
 #import pandas as pd
 
 ########## Globals ##########
@@ -16,7 +17,7 @@ import json
         the objective function is called.
 """
 Path_Instances = "Instances/Experimental"
-Path_Params = 'Results/Parameters/best_TS_params.txt'
+Path_Params = 'Results/Parameters/best_TSS_params.txt'
 Path_OPT = "Optimals/Experimental/Optimals.txt"
 output_directory = 'Results/Experimentals'
 
@@ -26,8 +27,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Libraries'))
 from ReadTSP import ReadTsp # type: ignore
 from ReadTSP import ReadTSP_optTour # type: ignore
 from TabuSearch import ObjFun  # type: ignore
-from TabuSearch import TabuSearch  # type: ignore
-from TabuSearch import TabuSearch_Sample  # type: ignore
+from TabuSearch import TabuSearch_Con  # type: ignore
+from TabuSearch import TabuSearch_Sample_Con  # type: ignore
 
 ########## Secundary functions ##########
 
@@ -62,18 +63,33 @@ def load_best_params(file_path):
         params = json.load(file)
     return params
 
-def write_results(file_path, results):
+def write_list_to_txt(file_path, data_list):
     """
-    write_results (function)
-        Input: File path to save the results and a list of results.
-        Output: None.
-        Description: Writes the results and corresponding errors to a text file.
+    Escribe los elementos de una lista en un archivo de texto,
+    separando cada elemento por un salto de línea.
+    
+    Args:
+        file_path (str): Ruta del archivo donde se guardarán los datos.
+        data_list (list): Lista de datos a escribir en el archivo.
     """
     with open(file_path, 'w') as file:
-        for result in results:
-            # Descomponer el resultado en el valor de la función objetivo y el error
-            obj_value, error = result
-            file.write(f"Objective Value: {obj_value}, Error: {error}\n")
+        for item in data_list:
+            file.write(f"{item}\n")
+
+def normalized_error(opt_value, found_value):
+    """
+    Calcula el error normalizado entre el valor óptimo y el valor encontrado.
+    
+    Args:
+        opt_value (float): Valor óptimo conocido.
+        found_value (float): Valor de la solución encontrada.
+    
+    Returns:
+        float: Error normalizado.
+    """
+    if opt_value == 0:  # Para evitar la división por cero
+        return float('inf') if found_value != 0 else 0
+    return abs(opt_value - found_value) / opt_value
 
 ########## Procedure ##########
 
@@ -90,31 +106,25 @@ Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Params.
 best_params = load_best_params(Path_Params)
-results_file_path = os.path.join(output_directory, 'tabu_search_results.txt')
+results_file_path = os.path.join(output_directory, 'tabu_search_sample_converge_194.csv')
 
 # Using best parameters to obtain solutions.
 n = len(Instances)
 results = []
-#for Instance, opt_value in zip(Instances, Opt_Instances):
-for i in range(11):
-        # Llamar a GLS (o TabuSearch) utilizando los mejores parámetros cargados.
-        result = TabuSearch_Sample(Instances[2], len(Instances[2]), 
-                     MaxIterations=150,
-                     TabuSize=best_params["TabuSize"],
-                     numDesireSolution= (len(Instances[2])*(len(Instances[2]-1)))//2,
-                     minErrorInten=0)
-        
-        # Calcular el valor de la función objetivo para la solución obtenida
-        obj_value = ObjFun(result, Instances[2])
+BestNeOf, BestSolOf = TabuSearch_Sample_Con(Instances[2], len(Instances[2]), 
+                    MaxIterations=275,
+                    TabuSize=best_params["TabuSize"],
+                    numDesireSolution=len(Instances[2])*(len(Instances[2]-1))//2,
+                    minErrorInten=best_params["ErrorTolerance"])
 
-        # Calcular el error respecto al valor óptimo
-        error = (obj_value - Opt_Instances[2]) / Opt_Instances[2]
-        
-        # Guardar el resultado y el error
-        results.append((obj_value, error))
-        
-        # Imprimir el valor de la función objetivo para la solución obtenida.
-        print(f"Objective Value: {obj_value}, Error: {error}")
+for i in range(len(BestNeOf)):
+    BestNeOf[i] = (BestNeOf[i]-Opt_Instances[2])/(Opt_Instances[2])
+    BestSolOf[i] =(BestSolOf[i]-Opt_Instances[2])/(Opt_Instances[2])
 
-# Escribir los resultados en un archivo
-write_results(results_file_path, results)
+with open(results_file_path, mode='w', newline='') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    # Escribir encabezados
+    csv_writer.writerow(['Mejor', 'Vecinos'])
+    # Escribir datos
+    for best_sol, best_ne in zip(BestSolOf, BestNeOf):
+        csv_writer.writerow([best_sol, best_ne])

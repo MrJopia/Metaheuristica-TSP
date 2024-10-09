@@ -16,7 +16,7 @@ import json
         the objective function is called.
 """
 Path_Instances = "Instances/Experimental"
-Path_Params = 'Results/Parameters/best_TS_params.txt'
+Path_Params = 'Results/Parameters/best_TSS_params.txt'
 Path_OPT = "Optimals/Experimental/Optimals.txt"
 output_directory = 'Results/Experimentals'
 
@@ -90,25 +90,23 @@ Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Params.
 best_params = load_best_params(Path_Params)
-results_file_path = os.path.join(output_directory, 'tabu_search_results.txt')
+results_file_path = os.path.join(output_directory, 'tabu_search_Sample_results.txt')
 
 # Using best parameters to obtain solutions.
 n = len(Instances)
 results = []
-#for Instance, opt_value in zip(Instances, Opt_Instances):
-for i in range(11):
+for Instance, opt_value in zip(Instances, Opt_Instances):
+    for i in range(11):
         # Llamar a GLS (o TabuSearch) utilizando los mejores parámetros cargados.
-        result = TabuSearch_Sample(Instances[2], len(Instances[2]), 
-                     MaxIterations=150,
-                     TabuSize=best_params["TabuSize"],
-                     numDesireSolution= (len(Instances[2])*(len(Instances[2]-1)))//2,
-                     minErrorInten=0)
+        result = TabuSearch_Sample(Instance, len(Instance), 150, 
+                                    593, (len(Instance)*(len(Instance) - 1))//2, 
+                                    0)
         
         # Calcular el valor de la función objetivo para la solución obtenida
-        obj_value = ObjFun(result, Instances[2])
+        obj_value = ObjFun(result, Instance)
 
         # Calcular el error respecto al valor óptimo
-        error = (obj_value - Opt_Instances[2]) / Opt_Instances[2]
+        error = (obj_value - opt_value) / opt_value
         
         # Guardar el resultado y el error
         results.append((obj_value, error))
