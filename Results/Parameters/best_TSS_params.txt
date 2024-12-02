@@ -1,5 +1,0 @@
-{
-    "MaxIterations": 495,
-    "TabuSize": 593,
-    "ErrorTolerance": 0.0011986114401079252
-}

@@ -1,10 +1,8 @@
 ########## Libraries ##########
 import sys
 import os
-#import numpy as np
 import json
 import csv
-#import pandas as pd
 
 ########## Globals ##########
 """
@@ -17,7 +15,7 @@ import csv
         the objective function is called.
 """
 Path_Instances = "Instances/Experimental"
-Path_Params = 'Results/Parameters/best_TSS_params.txt'
+Path_Params = 'Results/Parameters/best_TS_params.txt'
 Path_OPT = "Optimals/Experimental/Optimals.txt"
 output_directory = 'Results/Experimentals'
 
@@ -27,8 +25,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Libraries'))
 from ReadTSP import ReadTsp # type: ignore
 from ReadTSP import ReadTSP_optTour # type: ignore
 from TabuSearch import ObjFun  # type: ignore
-from TabuSearch import TabuSearch_Con  # type: ignore
-from TabuSearch import TabuSearch_Sample_Con  # type: ignore
+from TabuSearch import TabuSearch  # type: ignore
+from GLS import Guided_Local_Search # type: ignore
 
 ########## Secundary functions ##########
 
@@ -106,20 +104,19 @@ Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Params.
 best_params = load_best_params(Path_Params)
-results_file_path = os.path.join(output_directory, 'tabu_search_sample_converge_194.csv')
+results_file_path = os.path.join(output_directory, 'GLS_converge_38.csv')
 
 # Using best parameters to obtain solutions.
 n = len(Instances)
 results = []
-BestNeOf, BestSolOf = TabuSearch_Sample_Con(Instances[2], len(Instances[2]), 
-                    MaxIterations=275,
-                    TabuSize=best_params["TabuSize"],
-                    numDesireSolution=len(Instances[2])*(len(Instances[2]-1))//2,
-                    minErrorInten=best_params["ErrorTolerance"])
+BestNeOf, BestSolOf = TabuSearch(Instances[0], len(Instances[0]), 
+                    80000,
+                    best_params['TabuSize'],
+                    best_params['ErrorTolerance'])
 
 for i in range(len(BestNeOf)):
-    BestNeOf[i] = (BestNeOf[i]-Opt_Instances[2])/(Opt_Instances[2])
-    BestSolOf[i] =(BestSolOf[i]-Opt_Instances[2])/(Opt_Instances[2])
+    BestNeOf[i] = (BestNeOf[i]-Opt_Instances[0])/(Opt_Instances[0])
+    BestSolOf[i] = (BestSolOf[i]-Opt_Instances[0])/(Opt_Instances[0])
 
 with open(results_file_path, mode='w', newline='') as csvfile:
     csv_writer = csv.writer(csvfile)

@@ -27,7 +27,7 @@ from ReadTSP import ReadTsp # type: ignore
 from ReadTSP import ReadTSP_optTour # type: ignore
 from TabuSearch import ObjFun  # type: ignore
 from TabuSearch import TabuSearch  # type: ignore
-from TabuSearch import TabuSearch_Sample  # type: ignore
+from GLS import Guided_Local_Search # type: ignore
 
 ########## Secundary functions ##########
 
@@ -90,7 +90,7 @@ Instances, Opt_Instances = Read_Content(files_Instances, Path_OPT)
 
 # Params.
 best_params = load_best_params(Path_Params)
-results_file_path = os.path.join(output_directory, 'tabu_search_results.txt')
+results_file_path = os.path.join(output_directory, 'TS_results_194_1.txt')
 
 # Using best parameters to obtain solutions.
 n = len(Instances)
@@ -98,14 +98,14 @@ results = []
 #for Instance, opt_value in zip(Instances, Opt_Instances):
 for i in range(11):
         # Llamar a GLS (o TabuSearch) utilizando los mejores parámetros cargados.
-        result = TabuSearch_Sample(Instances[2], len(Instances[2]), 
-                     MaxIterations=150,
-                     TabuSize=best_params["TabuSize"],
-                     numDesireSolution= (len(Instances[2])*(len(Instances[2]-1)))//2,
-                     minErrorInten=0)
+        _ , result = TabuSearch(Instances[2], len(Instances[2]), 
+                     300000,
+                     best_params["TabuSize"],
+                     best_params["ErrorTolerance"])
         
         # Calcular el valor de la función objetivo para la solución obtenida
-        obj_value = ObjFun(result, Instances[2])
+        #obj_value = ObjFun(result, Instances[2])
+        obj_value = min(result)
 
         # Calcular el error respecto al valor óptimo
         error = (obj_value - Opt_Instances[2]) / Opt_Instances[2]
